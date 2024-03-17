@@ -1,11 +1,14 @@
 #importando pygame e livraria necessaria
 import pygame
 from pygame.locals import *
+import threading
 import time
 import math
 
 pygame.init()
 
+#inicializando variáveis
+clock = pygame.time.Clock()
 width_screen = 1280
 width = 1050
 height = 200
@@ -62,7 +65,7 @@ class Base_enemy(pygame.sprite.Sprite):
 
         self.i = 0
         self.image_atual = self.images_down
-        self.image = self.images_down[self.i]
+        self.image = self.image_atual[self.i]
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
         self.pos_y_inicial = 100 - 64 - 96//2
@@ -79,14 +82,15 @@ class Base_enemy(pygame.sprite.Sprite):
 
         self.image = self.image_atual[int(self.i)]
 
-        self.movement()
+        x = threading.Thread(target=self.movement)
+        x.start()
 
-        self.colisao()
+        # self.colisao()
 
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
     
-    # Definir movimento
+    # Definir moviment
     def movement(self):
         x = self.rect.x
         x_change = self.x_change
@@ -97,34 +101,20 @@ class Base_enemy(pygame.sprite.Sprite):
             x_change = -5
 
         if (x == 1000) and (len(cont) == 0):
-            time.sleep(0)
             cont.append(1)
         elif (x == 1000) and (len(cont) > 0):
-            time.sleep(2)
             self.image_atual = self.images_down
+            time.sleep(1.5)
         elif x == 100 :
-            time.sleep(2)
-            self.life -= 1
             self.image_atual = self.images_right
-
-        # colidiu = self.colisao()
-
-        # if colidiu:
-        #     if (x > 100) and (x < 1000):
-        #         if x_change == 5:
-        #             if x!= 550:
-        #                 x_change = -5
-        #         elif x_change == -5:
-        #             if x!= 550:
-        #                 x_change = 5
-
+            time.sleep(1.5)
 
         x += x_change
 
         self.rect.x = x
         self.x_change = x_change
 
-    #difinindo colisao
+    #definindo colisao
     # def colisao(self):
     #     collided = False
 
@@ -135,43 +125,59 @@ class Base_enemy(pygame.sprite.Sprite):
 
     #     return collided
             
-    def enemy_shoot(self):
+    def enemy_shoot(self, grupo_bullet):
         if self.shoot_cooldown == 0:
             self.shoot_cooldown = shoot_cooldown
             self.bullet = Bullet(width_screen, height, self.angle)
             grupo_bullet.add(self.bullet)
-            all_sprites_group.add(self.bullet)
+            # all_sprites_group.add(self.bullet)
 
 
+#definindo classe do tiro da coruja 
+bullet_image = pygame.image.load('Projeto/assets/bullet.png')
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y , angle):
-        super().__init__()
-        self.image = bullet_image
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
+    def __init__(self, x, y, angle):
+        pygame.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
         self.angle = angle
-        self.speed = bullet_speed
-        self.x_vel = math.cos(self.angle * (2*math.pi/360)) * self.speed
-        self.y_vel = math.sin(self.angle * (2*math.pi/360)) * self.speed
-        self.bullet_lifetime = bullet_lifetime
-        self.spawn_time = pygame.time.get_ticks()
-        self.is_shooting = False
+        self.image = bullet_image
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.x_vel = 0
+        self.y_vel = 0
+        self.speed = 5
+
 
     def bullet_movement(self):
-        self.x += self.x_vel
-        self.y += self.y_vel
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE]: 
+            self.x_vel = math.cos(self.angle * (2*math.pi/360)) * self.speed
+            self.y_vel = math.sin(self.angle * (2*math.pi/360)) * self.speed
 
-        self.rect.x = int(self.x)
-        self.rect.y = int(self.y)
-
-        if pygame.time.get_ticks() - self.spawn_time > self.bullet_lifetime:
-            self.kill()
 
     def update(self):
+
         self.bullet_movement()
 
+        self.rect.y += self.y_vel
+        self.rect.x += self.x_vel
 
+class Ground(pygame.sprite.Sprite):
+    def __init__(self, posX, posY):
+        super().__init__()
+        self.width = 700
+        self.height = 32
+        self.image = pygame.image.load("Projeto/assets/ground.png").convert_alpha()
+        self.rect = self.image.get_rect()
+        self.rect.center = [posX, posY]
+
+    def update(self):
+        pass
+    
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
 # Inicializar valores
 # Definir máscara de colisão
