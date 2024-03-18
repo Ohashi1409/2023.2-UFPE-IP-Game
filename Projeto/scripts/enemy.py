@@ -121,9 +121,9 @@ class Base_enemy(pygame.sprite.Sprite):
 
     def shootBullets(self, grupo_bullet):
         if self.x_change == 5:
-            grupo_bullet.add(enemyShot(self.rect.x + 60, self.rect.y + 50))
+            grupo_bullet.add(enemyShot(self.rect.centerx, self.rect.centery))
         elif self.x_change == -5:
-            grupo_bullet.add(enemyShot(self.rect.x + 20, self.rect.y + 50))
+            grupo_bullet.add(enemyShot(self.rect.centerx, self.rect.centery))
 
 
 enemy_bullet_image = pygame.image.load('Projeto/assets/bullet.png')
@@ -136,8 +136,8 @@ class enemyShot(pygame.sprite.Sprite):
         self.image = enemy_bullet_image
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        self.rect.centerx = x
+        self.rect.centery = y
         self.x_vel = 0
         self.y_vel = 0
         self.speed = 10
