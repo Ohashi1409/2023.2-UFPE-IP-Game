@@ -11,7 +11,7 @@ dt = 0
 fundo = pygame.image.load('Projeto/assets/fundo.png')
 chao = pygame.image.load('Projeto/assets/ground.png').convert_alpha()
 enemy = Base_enemy(width_screen, height, 0)
-bullet = Bullet(450, 100, 45)
+bullet = enemyShot(450, 200)
 grupo_enemy = pygame.sprite.Group()
 grupo_enemy.add(enemy)
 grupo_bullet = pygame.sprite.Group()
@@ -39,9 +39,9 @@ while running:
 
     blocks.draw(screen)
 
-    all_sprites_group.update()
+    grupo_enemy.update(grupo_bullet)
 
-    all_sprites_group.draw(screen)
+    grupo_enemy.draw(screen)
 
     pygame.display.flip()    
     

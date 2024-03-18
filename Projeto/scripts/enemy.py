@@ -3,7 +3,6 @@ import pygame
 from pygame.locals import *
 import threading
 import time
-import math
 
 pygame.init()
 
@@ -17,6 +16,7 @@ shoot_cooldown = 5
 bullet_scale = 1.4
 bullet_speed = 10
 bullet_lifetime = 500
+shoot = False
 
 # Criar classe de inimigo
 enemy_img = pygame.image.load('Projeto/assets/R-Sheet-Sheet.png')
@@ -44,6 +44,8 @@ class Base_enemy(pygame.sprite.Sprite):
         self.images_left = []
         self.images_right = []
         self.image_atual = []
+        self.shoot_cooldown = 1000
+        self.last = 0
 
         for c in range(0, 256, 64):
             left = load_crop_image(enemy_img, c, 96, 64, 64, False)
@@ -71,7 +73,7 @@ class Base_enemy(pygame.sprite.Sprite):
         self.pos_y_inicial = 100 - 64 - 96//2
         self.rect.topleft = (1280, 300)
     
-    def update(self):
+    def update(self, grupo_bullet):
         self.i += 0.20
         if self.i >= len(self.images_down):
             self.i = 0
@@ -82,16 +84,14 @@ class Base_enemy(pygame.sprite.Sprite):
 
         self.image = self.image_atual[int(self.i)]
 
-        x = threading.Thread(target=self.movement)
+        x = threading.Thread(target=self.movement, args=(grupo_bullet,))
         x.start()
-
-        # self.colisao()
 
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
     
-    # Definir moviment
-    def movement(self):
+    # Definir movimento do inimigo
+    def movement(self, grupo_bullet):
         x = self.rect.x
         x_change = self.x_change
 
@@ -108,62 +108,46 @@ class Base_enemy(pygame.sprite.Sprite):
         elif x == 100 :
             self.image_atual = self.images_right
             time.sleep(1.5)
+        elif (self.rect.x > 105) and (self.rect.x < 995) :
+            now = pygame.time.get_ticks()
+            if now - self.last >= self.shoot_cooldown:
+                self.shootBullets(grupo_bullet)
+                self.last = now
 
         x += x_change
 
         self.rect.x = x
         self.x_change = x_change
 
-    #definindo colisao
-    # def colisao(self):
-    #     collided = False
-
-    #     if pygame.sprite.spritecollide(enemy_img, bullet_image, True):
-    #         self.life -= 1
-    #         collided = True
-    #         time.sleep(1)
-
-    #     return collided
-            
-    def enemy_shoot(self, grupo_bullet):
-        if self.shoot_cooldown == 0:
-            self.shoot_cooldown = shoot_cooldown
-            self.bullet = Bullet(width_screen, height, self.angle)
-            grupo_bullet.add(self.bullet)
-            # all_sprites_group.add(self.bullet)
+    def shootBullets(self, grupo_bullet):
+        if self.x_change == 5:
+            grupo_bullet.add(enemyShot(self.rect.x + 60, self.rect.y + 50))
+        elif self.x_change == -5:
+            grupo_bullet.add(enemyShot(self.rect.x + 20, self.rect.y + 50))
 
 
-#definindo classe do tiro da coruja 
-bullet_image = pygame.image.load('Projeto/assets/bullet.png')
-class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y, angle):
+enemy_bullet_image = pygame.image.load('Projeto/assets/bullet.png')
+class enemyShot(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
         pygame.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
-        self.angle = angle
-        self.image = bullet_image
+        self.image = enemy_bullet_image
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
         self.x_vel = 0
         self.y_vel = 0
-        self.speed = 5
-
-
-    def bullet_movement(self):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_SPACE]: 
-            self.x_vel = math.cos(self.angle * (2*math.pi/360)) * self.speed
-            self.y_vel = math.sin(self.angle * (2*math.pi/360)) * self.speed
-
-
+        self.speed = 10
+    
     def update(self):
-
-        self.bullet_movement()
-
-        self.rect.y += self.y_vel
-        self.rect.x += self.x_vel
+        self.rect.move_ip([0, self.speed])
+    
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
+            
 
 class Ground(pygame.sprite.Sprite):
     def __init__(self, posX, posY):
@@ -179,5 +163,3 @@ class Ground(pygame.sprite.Sprite):
     
     def draw(self, screen):
         screen.blit(self.image, self.rect)
-# Inicializar valores
-# Definir máscara de colisão
