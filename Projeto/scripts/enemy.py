@@ -12,7 +12,6 @@ width_screen = 1280
 width = 1050
 height = 200
 cont = []
-shoot_cooldown = 5
 bullet_scale = 1.4
 bullet_speed = 10
 bullet_lifetime = 500
@@ -44,7 +43,7 @@ class Base_enemy(pygame.sprite.Sprite):
         self.images_left = []
         self.images_right = []
         self.image_atual = []
-        self.shoot_cooldown = 1000
+        self.shoot_cooldown = 900
         self.last = 0
 
         for c in range(0, 256, 64):
@@ -86,9 +85,6 @@ class Base_enemy(pygame.sprite.Sprite):
 
         x = threading.Thread(target=self.movement, args=(grupo_bullet,))
         x.start()
-
-        if self.shoot_cooldown > 0:
-            self.shoot_cooldown -= 1
     
     # Definir movimento do inimigo
     def movement(self, grupo_bullet):
